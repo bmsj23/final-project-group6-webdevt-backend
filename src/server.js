@@ -5,6 +5,7 @@ import connectDB from './config/database.js';
 import { testCloudinaryConnection } from './config/cloudinary.js';
 import { verifyEmailConnection } from './utils/emailService.js';
 import initializeSocket from './config/socket.js';
+import { startOrderAutoConfirmJob } from './utils/scheduler.js';
 
 // handle uncaught exceptions
 process.on('uncaughtException', (err) => {
@@ -33,6 +34,9 @@ const startServer = async () => {
 
     // make io accessible in controllers
     app.set('io', io);
+
+    // start cron jobs
+    startOrderAutoConfirmJob();
 
     // start listening
     const server = httpServer.listen(config.port, () => {
