@@ -113,7 +113,11 @@ export const createOrder = async (userId, orderData) => {
   for (const sellerId of sellerIds) {
     const seller = await User.findById(sellerId);
     if (seller && seller.email) {
-      await sendNewOrderEmail(seller.email, order.orderNumber, seller.name);
+      try {
+        await sendNewOrderEmail(seller.email, order.orderNumber, seller.name);
+      } catch (emailError) {
+        console.error('failed to send order email to seller:', emailError.message);
+      }
     }
   }
 
@@ -266,12 +270,16 @@ export const updateOrderStatus = async (orderId, userId, newStatus, note = '') =
 
   // send email notification to buyer
   if (order.buyer.email) {
-    await sendOrderStatusEmail(
-      order.buyer.email,
-      order.orderNumber,
-      newStatus,
-      order.buyer.name
-    );
+    try {
+      await sendOrderStatusEmail(
+        order.buyer.email,
+        order.orderNumber,
+        newStatus,
+        order.buyer.name
+      );
+    } catch (emailError) {
+      console.error('failed to send status update email:', emailError.message);
+    }
   }
 
   // update seller stats if completed
@@ -328,12 +336,16 @@ export const cancelOrder = async (orderId, userId, reason) => {
 
   // send email notification
   if (order.buyer.email) {
-    await sendOrderStatusEmail(
-      order.buyer.email,
-      order.orderNumber,
-      'cancelled',
-      order.buyer.name
-    );
+    try {
+      await sendOrderStatusEmail(
+        order.buyer.email,
+        order.orderNumber,
+        'cancelled',
+        order.buyer.name
+      );
+    } catch (emailError) {
+      console.error('failed to send cancellation email:', emailError.message);
+    }
   }
 
   return order;
