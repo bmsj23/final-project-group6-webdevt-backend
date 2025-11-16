@@ -25,8 +25,8 @@ export const createReviewValidator = [
     .notEmpty()
     .withMessage('Review text is required')
     .trim()
-    .isLength({ min: 10, max: 1000 })
-    .withMessage('Review text must be between 10 and 1000 characters'),
+    .isLength({ min: 3, max: 1000 })
+    .withMessage('Review text must be between 3 and 1000 characters'),
 
   body('images')
     .optional()
@@ -67,6 +67,34 @@ export const productIdValidator = [
   param('productId')
     .isMongoId()
     .withMessage('Invalid product ID'),
+
+  validate,
+];
+
+// validate review update
+export const updateReviewValidator = [
+  body('rating')
+    .notEmpty()
+    .withMessage('Rating is required')
+    .isInt({ min: 1, max: 5 })
+    .withMessage('Rating must be between 1 and 5'),
+
+  body('reviewText')
+    .notEmpty()
+    .withMessage('Review text is required')
+    .trim()
+    .isLength({ min: 3, max: 1000 })
+    .withMessage('Review text must be between 3 and 1000 characters'),
+
+  body('images')
+    .optional()
+    .isArray({ max: 5 })
+    .withMessage('Maximum 5 images allowed'),
+
+  body('images.*')
+    .optional()
+    .isURL()
+    .withMessage('Invalid image URL'),
 
   validate,
 ];
