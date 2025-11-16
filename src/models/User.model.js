@@ -33,6 +33,14 @@ const userSchema = new mongoose.Schema(
       maxlength: [100, 'Name cannot exceed 100 characters'],
     },
 
+    username: {
+      type: String,
+      trim: true,
+      minlength: [3, 'Username must be at least 3 characters'],
+      maxlength: [30, 'Username cannot exceed 30 characters'],
+      match: [/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, hyphens, and underscores'],
+    },
+
     profilePicture: {
       type: String,
       trim: true,
@@ -118,6 +126,7 @@ const userSchema = new mongoose.Schema(
 
 // indexes for faster queries
 userSchema.index({ studentNumber: 1 });
+userSchema.index({ username: 1 });
 userSchema.index({ role: 1 });
 
 // middleware to check if this is the first user (make them admin)
@@ -156,6 +165,7 @@ userSchema.methods.getPublicProfile = function() {
   return {
     _id: this._id,
     name: this.name,
+    username: this.username,
     email: this.email,
     profilePicture: this.profilePicture,
     campusAddress: this.campusAddress,
@@ -176,6 +186,7 @@ userSchema.methods.getFullProfile = function() {
     googleId: this.googleId,
     email: this.email,
     name: this.name,
+    username: this.username,
     studentNumber: this.studentNumber,
     contactNumber: this.contactNumber,
     profilePicture: this.profilePicture,
