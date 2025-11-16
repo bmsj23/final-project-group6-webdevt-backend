@@ -78,14 +78,24 @@ export const sendReportedUserNotification = async (userEmail, reportType) => {
 };
 
 // send order status update notification
-export const sendOrderStatusEmail = async (buyerEmail, order, newStatus) => {
-  const subject = `Order #${order._id} Status Update: ${newStatus}`;
+export const sendOrderStatusEmail = async (buyerEmail, orderNumber, newStatus, buyerName) => {
+  // custom messages based on status
+  const statusMessages = {
+    processing: 'Your order is being processed',
+    ready: 'Your order is ready for pickup',
+    shipped: 'Your order has been shipped',
+    completed: 'Your order has been completed',
+    cancelled: 'Your order has been cancelled',
+  };
+
+  const statusMessage = statusMessages[newStatus] || `Status updated to: ${newStatus}`;
+
+  const subject = `Order #${orderNumber} - ${statusMessage}`;
   const html = `
     <h2>Order Status Update</h2>
-    <p>Hello,</p>
-    <p>Your order status has been updated to: <strong>${newStatus}</strong></p>
-    <p><strong>Order ID:</strong> ${order._id}</p>
-    <p><strong>Total Amount:</strong> ₱${order.totalAmount}</p>
+    <p>Hello ${buyerName || ''},</p>
+    <p><strong>${statusMessage}</strong></p>
+    <p><strong>Order Number:</strong> ${orderNumber}</p>
     <br>
     <p>Thank you for using AnimoMart!</p>
   `;
