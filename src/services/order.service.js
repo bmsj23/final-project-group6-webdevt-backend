@@ -281,6 +281,23 @@ export const updateOrderStatus = async (orderId, userId, newStatus, note = '') =
     );
   }
 
+  if (newStatus === 'completed') {
+    const now = new Date();
+    const canComplete = order.buyerConfirmed ||
+                       (order.buyerConfirmationDeadline && now > order.buyerConfirmationDeadline);
+
+    if (!canComplete) {
+      throw new AppError(
+        'Order cannot be completed until buyer confirms or confirmation deadline passes',
+        400
+      );
+    }
+  }
+
+  if ((newStatus === 'ready' || newStatus === 'shipped') && !order.buyerConfirmationDeadline) {
+    order.buyerConfirmationDeadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  }
+
   await order.updateStatus(newStatus, userId, note);
 
   // send email notification to buyer
@@ -394,6 +411,72 @@ export const getOrderStats = async (userId = null) => {
   return stats;
 };
 
+export const confirmOrderByBuyer = async (orderId, userId) => {
+  const order = await Order.findById(orderId)
+    .populate('buyer', 'email name');
+
+  if (!order) {
+    throw new AppError('Order not found', 404);
+  }
+
+  if (order.buyer._id.toString() !== userId) {
+    throw new AppError('Only the buyer can confirm this order', 403);
+  }
+
+  if (order.status !== 'shipped' && order.status !== 'ready') {
+    throw new AppError(
+      'Order can only be confirmed when it is shipped or ready for pickup',
+      400
+    );
+  }
+
+  if (order.buyerConfirmed) {
+    throw new AppError('Order has already been confirmed', 400);
+  }
+
+  order.buyerConfirmed = true;
+  await order.save();
+
+  return order;
+};
+
+export const autoConfirmOrders = async () => {
+  const now = new Date();
+
+  const ordersToConfirm = await Order.find({
+    status: { $in: ['shipped', 'ready'] },
+    buyerConfirmed: false,
+    buyerConfirmationDeadline: { $lt: now },
+  });
+
+  let confirmedCount = 0;
+
+  for (const order of ordersToConfirm) {
+    order.status = 'completed';
+    order.autoConfirmedAt = now;
+    order.completedAt = now;
+
+    order.statusHistory.push({
+      status: 'completed',
+      timestamp: now,
+      note: 'auto-confirmed after deadline',
+    });
+
+    await order.save();
+
+    for (const item of order.items) {
+      const seller = await User.findById(item.seller);
+      if (seller) {
+        await seller.incrementSales(item.price * item.quantity);
+      }
+    }
+
+    confirmedCount++;
+  }
+
+  return confirmedCount;
+};
+
 export default {
   createOrder,
   getOrderById,
@@ -402,4 +485,6 @@ export default {
   updateOrderStatus,
   cancelOrder,
   getOrderStats,
+  confirmOrderByBuyer,
+  autoConfirmOrders,
 };
