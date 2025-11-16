@@ -155,6 +155,16 @@ export const getTrendingProducts = asyncHandler(async (req, res) => {
   successResponse(res, trending, 'Trending products retrieved successfully', 200);
 });
 
+// increment product view count
+
+export const incrementProductView = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+
+  const product = await productService.incrementProductView(productId);
+
+  successResponse(res, { views: product.views }, 'Product view incremented successfully', 200);
+});
+
 export default {
   getAllProducts,
   getProduct,
@@ -168,4 +178,5 @@ export default {
   getCategoryCounts,
   getSimilarProducts,
   getTrendingProducts,
+  incrementProductView,
 };
