@@ -144,6 +144,19 @@ const orderSchema = new mongoose.Schema(
     completedAt: {
       type: Date,
     },
+
+    buyerConfirmed: {
+      type: Boolean,
+      default: false,
+    },
+
+    buyerConfirmationDeadline: {
+      type: Date,
+    },
+
+    autoConfirmedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
@@ -263,6 +276,18 @@ orderSchema.virtual('isCompleted').get(function() {
 // virtual: is order cancelled
 orderSchema.virtual('isCancelled').get(function() {
   return this.status === 'cancelled';
+});
+
+// virtual: days until auto confirm
+orderSchema.virtual('daysUntilAutoConfirm').get(function() {
+  if (!this.buyerConfirmationDeadline || this.buyerConfirmed) {
+    return null;
+  }
+  const now = new Date();
+  const deadline = new Date(this.buyerConfirmationDeadline);
+  const diffTime = deadline - now;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays > 0 ? diffDays : 0;
 });
 
 // create and export model
