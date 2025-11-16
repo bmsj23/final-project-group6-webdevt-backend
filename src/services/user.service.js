@@ -31,9 +31,22 @@ export const updateProfile = async (userId, updateData) => {
     throw new AppError('User not found', 404);
   }
 
+  // check username uniqueness if updating username
+  if (updateData.username && updateData.username !== user.username) {
+    const existingUser = await User.findOne({ 
+      username: updateData.username,
+      _id: { $ne: userId }
+    });
+    
+    if (existingUser) {
+      throw new AppError('Username is already taken', 400);
+    }
+  }
+
   // fields that can be updated
   const allowedUpdates = [
     'name',
+    'username',
     'studentNumber',
     'contactNumber',
     'campusAddress',
@@ -235,6 +248,7 @@ export const searchUsers = async (searchTerm, options = {}) => {
   const query = {
     $or: [
       { name: { $regex: searchTerm, $options: 'i' } },
+      { username: { $regex: searchTerm, $options: 'i' } },
       { email: { $regex: searchTerm, $options: 'i' } },
       { studentNumber: { $regex: searchTerm, $options: 'i' } },
     ],
