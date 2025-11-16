@@ -25,8 +25,8 @@ export const createReviewValidator = [
     .notEmpty()
     .withMessage('Review text is required')
     .trim()
-    .isLength({ min: 3, max: 1000 })
-    .withMessage('Review text must be between 3 and 1000 characters'),
+    .isLength({ max: 1000 })
+    .withMessage('Review text must be less than 1000 characters'),
 
   body('images')
     .optional()
@@ -83,8 +83,8 @@ export const updateReviewValidator = [
     .notEmpty()
     .withMessage('Review text is required')
     .trim()
-    .isLength({ min: 3, max: 1000 })
-    .withMessage('Review text must be between 3 and 1000 characters'),
+    .isLength({ max: 1000 })
+    .withMessage('Review text must be less than 1000 characters'),
 
   body('images')
     .optional()
