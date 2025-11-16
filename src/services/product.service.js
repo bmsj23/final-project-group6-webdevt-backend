@@ -463,3 +463,17 @@ export const getTrendingProducts = async ({ limit = 20, daysBack = 7 }) => {
 
   return trending;
 };
+
+export const incrementProductView = async (productId) => {
+  const product = await Product.findByIdAndUpdate(
+    productId,
+    { $inc: { views: 1 } },
+    { new: true }
+  );
+
+  if (!product) {
+    throw new AppError('Product not found', 404);
+  }
+
+  return product;
+};
