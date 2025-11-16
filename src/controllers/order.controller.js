@@ -127,6 +127,17 @@ export const getOrderStats = asyncHandler(async (req, res) => {
   successResponse(res, stats, 'Order statistics retrieved successfully', 200);
 });
 
+// confirm order by buyer
+
+export const confirmOrderByBuyer = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { orderId } = req.params;
+
+  const order = await orderService.confirmOrderByBuyer(orderId, userId);
+
+  successResponse(res, order, 'Order confirmed successfully', 200);
+});
+
 export default {
   createOrder,
   getMyOrders,
@@ -136,4 +147,5 @@ export default {
   getMyPurchases,
   getMySales,
   getOrderStats,
+  confirmOrderByBuyer,
 };
