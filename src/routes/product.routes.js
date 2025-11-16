@@ -68,4 +68,9 @@ router.delete('/:productId', productValidator.productIdValidator, productControl
 // access  private (owner only)
 router.patch('/:productId/status', productValidator.productIdValidator, productValidator.updateStatusValidator, productController.updateProductStatus);
 
+// route   POST /api/products/:productId/view
+// desc    increment product view count
+// access  private
+router.post('/:productId/view', productValidator.productIdValidator, productController.incrementProductView);
+
 export default router;
