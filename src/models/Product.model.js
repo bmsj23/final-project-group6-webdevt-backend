@@ -249,6 +249,12 @@ productSchema.methods.incrementStock = function(quantity) {
   return this.save();
 };
 
+// instance method: increment views
+productSchema.methods.incrementViews = function() {
+  this.views += 1;
+  return this.save();
+};
+
 // instance method: mark as sold
 productSchema.methods.markAsSold = function() {
   this.status = 'sold';
