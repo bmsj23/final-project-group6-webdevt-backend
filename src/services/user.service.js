@@ -33,11 +33,11 @@ export const updateProfile = async (userId, updateData) => {
 
   // check username uniqueness if updating username
   if (updateData.username && updateData.username !== user.username) {
-    const existingUser = await User.findOne({ 
+    const existingUser = await User.findOne({
       username: updateData.username,
       _id: { $ne: userId }
     });
-    
+
     if (existingUser) {
       throw new AppError('Username is already taken', 400);
     }
