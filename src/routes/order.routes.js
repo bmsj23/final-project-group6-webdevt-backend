@@ -48,4 +48,9 @@ router.patch('/:orderId/status', orderValidator.orderIdValidator, orderValidator
 // access  private
 router.post('/:orderId/cancel', orderValidator.orderIdValidator, orderValidator.cancelOrderValidator, orderController.cancelOrder);
 
+// route   POST /api/orders/:orderId/confirm
+// desc    confirm order by buyer
+// access  private (buyer only)
+router.post('/:orderId/confirm', orderValidator.orderIdValidator, orderController.confirmOrderByBuyer);
+
 export default router;
