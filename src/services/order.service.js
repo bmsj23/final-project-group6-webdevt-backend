@@ -251,17 +251,32 @@ export const updateOrderStatus = async (orderId, userId, newStatus, note = '') =
     throw new AppError('Only the seller can update order status', 403);
   }
 
-  // validate status transition
+  // validate status transition based on delivery method
   const validTransitions = {
     pending: ['processing', 'cancelled'],
-    processing: ['ready_for_pickup', 'out_for_delivery', 'cancelled'],
-    ready_for_pickup: ['completed', 'cancelled'],
-    out_for_delivery: ['completed', 'cancelled'],
+    processing: ['ready', 'shipped', 'cancelled'],
+    ready: ['completed', 'cancelled'],
+    shipped: ['completed', 'cancelled'],
   };
 
   if (!validTransitions[order.status]?.includes(newStatus)) {
     throw new AppError(
       `Cannot change status from ${order.status} to ${newStatus}`,
+      400
+    );
+  }
+
+  // validate status matches delivery method
+  if (newStatus === 'ready' && order.deliveryMethod !== 'meetup') {
+    throw new AppError(
+      'Status "ready" is only valid for meetup orders',
+      400
+    );
+  }
+
+  if (newStatus === 'shipped' && order.deliveryMethod !== 'shipping') {
+    throw new AppError(
+      'Status "shipped" is only valid for shipping orders',
       400
     );
   }
