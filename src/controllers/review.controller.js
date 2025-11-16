@@ -1,4 +1,5 @@
 import asyncHandler from '../utils/asyncHandler.js';
+import mongoose from 'mongoose';
 import Review from '../models/Review.model.js';
 import Order from '../models/Order.model.js';
 import Product from '../models/Product.model.js';
@@ -7,13 +8,42 @@ import { successResponse } from '../utils/response.js';
 import AppError from '../utils/AppError.js';
 import { sendNewReviewEmail } from '../utils/emailService.js';
 
+// get current user's reviews
+
+export const getMyReviews = asyncHandler(async (req, res) => {
+  const buyerId = req.user.id;
+  const { page, limit } = req.query;
+
+  const skip = ((parseInt(page) || 1) - 1) * (parseInt(limit) || 20);
+
+  const reviews = await Review.find({ buyer: buyerId })
+    .populate('product', 'name images seller')
+    .populate('seller', 'name email')
+    .sort({ createdAt: -1 })
+    .limit(parseInt(limit) || 20)
+    .skip(skip);
+
+  const total = await Review.countDocuments({ buyer: buyerId });
+
+  successResponse(res, {
+    reviews,
+    pagination: {
+      currentPage: parseInt(page) || 1,
+      totalPages: Math.ceil(total / (parseInt(limit) || 20)),
+      totalReviews: total,
+    },
+  }, 'Your reviews retrieved successfully', 200);
+});
+
 // get reviews for product
 
 export const getProductReviews = asyncHandler(async (req, res) => {
   const { productId } = req.params;
   const { page, limit, rating } = req.query;
 
-  const query = { product: productId };
+  const productObjectId = new mongoose.Types.ObjectId(productId);
+
+  const query = { product: productObjectId };
   if (rating) query.rating = parseInt(rating);
 
   const skip = ((parseInt(page) || 1) - 1) * (parseInt(limit) || 20);
@@ -27,12 +57,32 @@ export const getProductReviews = asyncHandler(async (req, res) => {
   const total = await Review.countDocuments(query);
 
   // get average rating
-  const avgRating = await Review.getAverageRating(productId);
+  const avgRating = await Review.getAverageRating(productObjectId);
+
+  // get rating distribution
+  const ratingDistribution = await Review.aggregate([
+    { $match: { product: productObjectId } },
+    {
+      $group: {
+        _id: '$rating',
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  // create array with counts for each rating (1-5 stars)
+  const distribution = [0, 0, 0, 0, 0];
+  ratingDistribution.forEach(({ _id, count }) => {
+    if (_id >= 1 && _id <= 5) {
+      distribution[_id - 1] = count;
+    }
+  });
 
   successResponse(res, {
     reviews,
     averageRating: avgRating.averageRating,
     totalReviews: avgRating.totalReviews,
+    ratingDistribution: distribution,
     pagination: {
       currentPage: parseInt(page) || 1,
       totalPages: Math.ceil(total / (parseInt(limit) || 20)),
@@ -166,7 +216,49 @@ export const markReviewHelpful = asyncHandler(async (req, res) => {
   successResponse(res, review, 'Review marked as helpful', 200);
 });
 
+export const updateReview = asyncHandler(async (req, res) => {
+  const buyerId = req.user.id;
+  const { reviewId } = req.params;
+  const { rating, reviewText, images } = req.body;
+
+  const review = await Review.findById(reviewId);
+
+  if (!review) {
+    throw new AppError('Review not found', 404);
+  }
+
+  if (review.buyer.toString() !== buyerId) {
+    throw new AppError('You can only update your own reviews', 403);
+  }
+
+  // update review fields
+  review.rating = rating;
+  review.reviewText = reviewText;
+  if (images !== undefined) {
+    review.images = images;
+  }
+
+  await review.save();
+
+  // update product rating
+  const product = await Product.findById(review.product);
+  await product.updateRating();
+
+  // update seller rating
+  const sellerRating = await Review.getSellerRating(review.seller);
+  const seller = await User.findById(review.seller);
+  await seller.updateSellerRating(sellerRating.averageRating);
+
+  await review.populate([
+    { path: 'buyer', select: 'name profilePicture' },
+    { path: 'product', select: 'name images' },
+  ]);
+
+  successResponse(res, review, 'Review updated successfully', 200);
+});
+
 export default {
+  getMyReviews,
   getProductReviews,
   createReview,
   addSellerResponse,
