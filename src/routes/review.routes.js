@@ -8,6 +8,11 @@ const router = express.Router();
 // all routes require authentication (dlsl students only)
 router.use(authenticate);
 
+// route   GET /api/reviews/my
+// desc    get current user's reviews
+// access  private
+router.get('/my', reviewController.getMyReviews);
+
 // route   GET /api/reviews/product/:productId
 // desc    get reviews for product
 // access  private
@@ -28,4 +33,8 @@ router.post('/:reviewId/response', reviewValidator.reviewIdValidator, reviewVali
 // access  private
 router.post('/:reviewId/helpful', reviewValidator.reviewIdValidator, reviewController.markReviewHelpful);
 
+// route   PUT /api/reviews/:reviewId
+// desc    update review
+// access  private (buyer only - can only update own review)
+router.put('/:reviewId', reviewValidator.reviewIdValidator, reviewValidator.updateReviewValidator, reviewController.updateReview);
 export default router;
