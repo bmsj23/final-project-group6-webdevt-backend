@@ -70,10 +70,10 @@
     // access  private (admin only)
     router.patch('/reports/:reportId/status', reportValidator.reportIdValidator, reportValidator.updateReportStatusValidator, adminController.updateReportStatus);
 
-    // route   POST /api/admin/reports/:reportId/resolve
+    // route   PUT /api/admin/reports/:reportId/resolve
     // desc    resolve report
     // access  private (admin only)
-    router.post('/reports/:reportId/resolve', reportValidator.reportIdValidator, reportValidator.resolveReportValidator, adminController.resolveReport);
+    router.put('/reports/:reportId/resolve', reportValidator.reportIdValidator, reportValidator.resolveReportValidator, adminController.resolveReport);
 
     // statistics
     // route   GET /api/admin/statistics
