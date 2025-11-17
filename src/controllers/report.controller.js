@@ -1,5 +1,7 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import Report from '../models/Report.model.js';
+import Product from '../models/Product.model.js';
+import User from '../models/User.model.js';
 import { successResponse } from '../utils/response.js';
 import AppError from '../utils/AppError.js';
 
@@ -48,10 +50,38 @@ export const getMyReports = asyncHandler(async (req, res) => {
     .limit(parseInt(limit) || 20)
     .skip(skip);
 
+  // populate reported entities
+  const populatedReports = await Promise.all(
+    reports.map(async (report) => {
+      const reportObj = report.toObject();
+      
+      if (report.reportedEntity.entityType === 'product') {
+        const product = await Product.findById(report.reportedEntity.entityId)
+          .populate('seller', 'name email')
+          .select('name price images')
+          .lean();
+        
+        if (product) {
+          reportObj.reportedProduct = product;
+        }
+      } else if (report.reportedEntity.entityType === 'user') {
+        const user = await User.findById(report.reportedEntity.entityId)
+          .select('name email')
+          .lean();
+        
+        if (user) {
+          reportObj.reportedUser = user;
+        }
+      }
+      
+      return reportObj;
+    })
+  );
+
   const total = await Report.countDocuments(query);
 
   successResponse(res, {
-    reports,
+    reports: populatedReports,
     pagination: {
       currentPage: parseInt(page) || 1,
       totalPages: Math.ceil(total / (parseInt(limit) || 20)),
