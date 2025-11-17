@@ -111,6 +111,10 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    suspendedAt: {
+      type: Date,
+    },
+
     lastLogin: {
       type: Date,
       default: Date.now,
@@ -206,7 +210,8 @@ userSchema.methods.getFullProfile = function() {
 userSchema.methods.suspend = function(reason) {
   this.isSuspended = true;
   this.isActive = false;
-  this.suspensionReason = reason;
+  this.suspensionReason = reason || 'Suspended by admin';
+  this.suspendedAt = new Date();
   return this.save();
 };
 
@@ -215,6 +220,7 @@ userSchema.methods.activate = function() {
   this.isSuspended = false;
   this.isActive = true;
   this.suspensionReason = null;
+  this.suspendedAt = null;
   return this.save();
 };
 
