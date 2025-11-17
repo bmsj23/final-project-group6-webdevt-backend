@@ -29,7 +29,7 @@ export const authenticate = asyncHandler(async (req, res, next) => {
     }
 
     // check if user is suspended
-    if (user.status === 'suspended') {
+    if (user.isSuspended) {
       throw new AppError('Your account has been suspended. Please contact support.', 403);
     }
 
@@ -37,6 +37,9 @@ export const authenticate = asyncHandler(async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    if (error.statusCode === 403) {
+      throw error;
+    }
     throw new AppError('Not authorized to access this route', 401);
   }
 });
