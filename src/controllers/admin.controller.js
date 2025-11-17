@@ -155,12 +155,12 @@ export const getAllReports = asyncHandler(async (req, res) => {
   const populatedReports = await Promise.all(
     reports.map(async (report) => {
       const reportObj = report.toObject();
-      
+
       if (report.reportedEntity.entityType === 'product') {
         const product = await Product.findById(report.reportedEntity.entityId)
           .populate('seller', 'name email')
           .lean();
-        
+
         if (product) {
           reportObj.reportedProduct = product;
           reportObj.reportedUser = product.seller;
@@ -169,12 +169,12 @@ export const getAllReports = asyncHandler(async (req, res) => {
         const user = await User.findById(report.reportedEntity.entityId)
           .select('name email')
           .lean();
-        
+
         if (user) {
           reportObj.reportedUser = user;
         }
       }
-      
+
       return reportObj;
     })
   );
