@@ -139,15 +139,50 @@ export const getAllOrders = asyncHandler(async (req, res) => {
 export const getAllReports = asyncHandler(async (req, res) => {
   const { status, page, limit } = req.query;
 
-  const result = await Report.findByStatus(status || 'pending', {
-    limit: parseInt(limit) || 20,
-    skip: ((parseInt(page) || 1) - 1) * (parseInt(limit) || 20),
-  });
+  const query = {};
+  if (status) query.status = status;
 
-  const total = await Report.countDocuments({ status: status || 'pending' });
+  const skip = ((parseInt(page) || 1) - 1) * (parseInt(limit) || 20);
+
+  const reports = await Report.find(query)
+    .populate('reporter', 'name email')
+    .populate('reviewedBy', 'name')
+    .sort({ createdAt: -1 })
+    .limit(parseInt(limit) || 20)
+    .skip(skip);
+
+  // populate reported entities based on type
+  const populatedReports = await Promise.all(
+    reports.map(async (report) => {
+      const reportObj = report.toObject();
+      
+      if (report.reportedEntity.entityType === 'product') {
+        const product = await Product.findById(report.reportedEntity.entityId)
+          .populate('seller', 'name email')
+          .lean();
+        
+        if (product) {
+          reportObj.reportedProduct = product;
+          reportObj.reportedUser = product.seller;
+        }
+      } else if (report.reportedEntity.entityType === 'user') {
+        const user = await User.findById(report.reportedEntity.entityId)
+          .select('name email')
+          .lean();
+        
+        if (user) {
+          reportObj.reportedUser = user;
+        }
+      }
+      
+      return reportObj;
+    })
+  );
+
+  const total = await Report.countDocuments(query);
 
   successResponse(res, {
-    reports: result,
+    reports: populatedReports,
     pagination: {
       currentPage: parseInt(page) || 1,
       totalPages: Math.ceil(total / (parseInt(limit) || 20)),
