@@ -19,15 +19,12 @@ export const createReportValidator = [
     .notEmpty()
     .withMessage('Reason is required')
     .isIn([
-      'inappropriate-content',
-      'spam',
-      'scam',
+      'inappropriate_content',
+      'scam_or_fraud',
+      'counterfeit_product',
       'harassment',
-      'fake-product',
-      'counterfeit',
-      'misleading-info',
-      'offensive-language',
-      'others'
+      'spam',
+      'other'
     ])
     .withMessage('Invalid reason'),
 
@@ -65,7 +62,7 @@ export const updateReportStatusValidator = [
   body('status')
     .notEmpty()
     .withMessage('Status is required')
-    .isIn(['pending', 'under-review', 'resolved', 'dismissed'])
+    .isIn(['pending', 'under_review', 'resolved', 'dismissed'])
     .withMessage('Invalid status'),
 
   body('notes')
