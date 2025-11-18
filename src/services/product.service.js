@@ -63,11 +63,11 @@ export const getProductById = async (productId, incrementView = false) => {
     await product.incrementViews();
   }
 
-  // get seller's active listings count
+  // get seller's listings count
   if (product.seller) {
     const listingsCount = await Product.countDocuments({
       seller: product.seller._id,
-      status: 'active',
+      status: { $ne: 'deleted' },
     });
 
     // add listingsCount and rating to seller object
