@@ -52,7 +52,7 @@ export const createProduct = async (sellerId, productData) => {
 
 export const getProductById = async (productId, incrementView = false) => {
   const product = await Product.findById(productId)
-    .populate('seller', 'name profilePicture sellerInfo contactNumber');
+    .populate('seller', 'name username profilePicture sellerInfo contactNumber');
 
   if (!product) {
     throw new AppError('Product not found', 404);
@@ -61,6 +61,24 @@ export const getProductById = async (productId, incrementView = false) => {
   // increment views if requested
   if (incrementView && product.status === 'active') {
     await product.incrementViews();
+  }
+
+  // get seller's active listings count
+  if (product.seller) {
+    const listingsCount = await Product.countDocuments({
+      seller: product.seller._id,
+      status: 'active',
+    });
+
+    // add listingsCount and rating to seller object
+    const productObj = product.toObject();
+    productObj.seller = {
+      ...productObj.seller,
+      listingsCount,
+      rating: productObj.seller.sellerInfo?.averageRating || 0,
+    };
+
+    return productObj;
   }
 
   return product;
