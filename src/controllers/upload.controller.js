@@ -3,6 +3,19 @@ import * as cloudinaryService from '../services/cloudinary.service.js';
 import { successResponse } from '../utils/response.js';
 import AppError from '../utils/AppError.js';
 
+// upload profile picture
+
+export const uploadProfilePicture = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw new AppError('No file uploaded', 400);
+  }
+
+  const userId = req.user.id;
+  const result = await cloudinaryService.uploadProfilePicture(req.file.buffer, userId);
+
+  successResponse(res, result, 'Profile picture uploaded successfully', 200);
+});
+
 // upload single image
 
 export const uploadSingleImage = asyncHandler(async (req, res) => {
@@ -57,6 +70,7 @@ export const deleteImage = asyncHandler(async (req, res) => {
 });
 
 export default {
+  uploadProfilePicture,
   uploadSingleImage,
   uploadMultipleImages,
   deleteImage,
