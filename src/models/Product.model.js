@@ -160,6 +160,12 @@ const productSchema = new mongoose.Schema(
       min: [0, 'Views cannot be negative'],
     },
 
+    viewedBy: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+      default: [],
+      select: false,
+    },
+
     averageRating: {
       type: Number,
       default: 0,
@@ -211,10 +217,24 @@ productSchema.index({ status: 1, stock: 1 });
 productSchema.index({ name: 'text', description: 'text' });
 productSchema.index({ createdAt: -1 });
 
-// instance method: increment views
-productSchema.methods.incrementViews = function() {
-  this.views += 1;
-  return this.save();
+// instance method: increment views for unique users only
+productSchema.methods.incrementViews = async function(userId) {
+  if (!userId) {
+    return this;
+  }
+
+  // check if user already viewed this product
+  const alreadyViewed = this.viewedBy.some(
+    viewerId => viewerId.toString() === userId.toString()
+  );
+
+  if (!alreadyViewed) {
+    this.views += 1;
+    this.viewedBy.push(userId);
+    return this.save();
+  }
+
+  return this;
 };
 
 // instance method: update rating
@@ -252,12 +272,6 @@ productSchema.methods.incrementStock = function(quantity) {
     this.status = 'active';
   }
 
-  return this.save();
-};
-
-// instance method: increment views
-productSchema.methods.incrementViews = function() {
-  this.views += 1;
   return this.save();
 };
 
