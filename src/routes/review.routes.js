@@ -37,4 +37,10 @@ router.post('/:reviewId/helpful', reviewValidator.reviewIdValidator, reviewContr
 // desc    update review
 // access  private (buyer only - can only update own review)
 router.put('/:reviewId', reviewValidator.reviewIdValidator, reviewValidator.updateReviewValidator, reviewController.updateReview);
+
+// route   DELETE /api/reviews/:reviewId
+// desc    delete review
+// access  private (buyer only - can only delete own review)
+router.delete('/:reviewId', reviewValidator.reviewIdValidator, reviewController.deleteReview);
+
 export default router;
