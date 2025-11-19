@@ -7,6 +7,7 @@ import User from '../models/User.model.js';
 import Product from '../models/Product.model.js';
 import Order from '../models/Order.model.js';
 import { successResponse } from '../utils/response.js';
+import AppError from '../utils/AppError.js';
 
 // get all users
 
@@ -284,6 +285,7 @@ export const getStatistics = asyncHandler(async (req, res) => {
     revenue: revenue[0]?.total || 0,
   }, 'Statistics retrieved successfully', 200);
 });
+
 export default {
   getAllUsers,
   suspendUser,

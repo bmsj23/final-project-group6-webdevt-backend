@@ -6,6 +6,18 @@ import AppError from '../utils/AppError.js';
 
 const googleClient = new OAuth2Client(config.google.clientId);
 
+// check if email is in admin allowlist from environment variable
+const isAdminAllowed = (email) => {
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const envAdmins = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean);
+
+  return envAdmins.includes(normalizedEmail);
+};
+
 // verify google oauth token and get user info
 // param {string} token - Google OAuth token
 // returns {Object} user info from Google
@@ -59,6 +71,8 @@ export const googleAuth = async (googleToken) => {
       throw new AppError('User with this email already exists', 409);
     }
 
+    const shouldBeAdmin = isAdminAllowed(googleUserInfo.email);
+
     // create new user
     user = await User.create({
       googleId: googleUserInfo.googleId,
@@ -66,11 +80,20 @@ export const googleAuth = async (googleToken) => {
       name: googleUserInfo.name,
       profilePicture: googleUserInfo.profilePicture,
       isActive: true,
+      role: shouldBeAdmin ? 'admin' : 'user',
     });
   } else {
     // update profile picture and last login for existing users
     user.profilePicture = googleUserInfo.profilePicture;
     user.lastLogin = new Date();
+
+    if (user.role !== 'admin') {
+      const shouldBeAdmin = isAdminAllowed(user.email);
+      if (shouldBeAdmin) {
+        user.role = 'admin';
+      }
+    }
+
     await user.save();
   }
 
