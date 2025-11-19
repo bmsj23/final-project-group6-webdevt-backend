@@ -34,15 +34,23 @@ export const getConversation = asyncHandler(async (req, res) => {
 
 export const sendMessage = asyncHandler(async (req, res) => {
   const senderId = req.user.id;
-  const { recipient, messageText, product, image } = req.body;
+  const { recipient, messageText, product, image, images } = req.body;
 
-  const message = await Message.create({
+  const messageData = {
     sender: senderId,
     recipient,
     messageText,
     product,
-    image,
-  });
+  };
+
+  if (images && Array.isArray(images)) {
+    messageData.images = images;
+  } else if (image) {
+    messageData.images = [image];
+    messageData.image = image;
+  }
+
+  const message = await Message.create(messageData);
 
   await message.populate([
     { path: 'sender', select: 'name profilePicture' },
@@ -75,6 +83,7 @@ export const sendMessage = asyncHandler(async (req, res) => {
         messageText: message.messageText,
         product: message.product,
         image: message.image,
+        images: message.images,
         isRead: message.isRead,
         readAt: message.readAt,
         createdAt: message.createdAt,
@@ -101,10 +110,15 @@ export const sendMessage = asyncHandler(async (req, res) => {
     const senderUser = await User.findById(senderId);
 
     if (recipientUser && recipientUser.email && senderUser) {
+      let emailContent = messageText;
+      if (!emailContent) {
+        const imageCount = message.images?.length || 0;
+        emailContent = imageCount > 1 ? `[${imageCount} Images]` : '[Image]';
+      }
       await sendNewMessageEmail(
         recipientUser.email,
         senderUser.name,
-        messageText
+        emailContent
       );
     }
   } catch (emailError) {
