@@ -189,7 +189,7 @@ export const getAllProducts = async (filters = {}) => {
     maxPrice,
     search,
     sellerId,
-    status = 'active',
+    status,
     page = 1,
     limit = 20,
     sortBy = 'createdAt',
@@ -199,7 +199,7 @@ export const getAllProducts = async (filters = {}) => {
   const query = {};
 
   // apply filters
-  if (status) query.status = status;
+  if (status !== undefined) query.status = status;
 
   // category filtering
   if (category) {
