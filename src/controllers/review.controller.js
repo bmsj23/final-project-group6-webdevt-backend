@@ -257,10 +257,47 @@ export const updateReview = asyncHandler(async (req, res) => {
   successResponse(res, review, 'Review updated successfully', 200);
 });
 
+export const deleteReview = asyncHandler(async (req, res) => {
+  const buyerId = req.user.id;
+  const { reviewId } = req.params;
+
+  const review = await Review.findById(reviewId);
+
+  if (!review) {
+    throw new AppError('Review not found', 404);
+  }
+
+  if (review.buyer.toString() !== buyerId) {
+    throw new AppError('You can only delete your own reviews', 403);
+  }
+
+  const productId = review.product;
+  const sellerId = review.seller;
+
+  await review.deleteOne();
+
+  // update product rating
+  const product = await Product.findById(productId);
+  if (product) {
+    await product.updateRating();
+  }
+
+  // update seller rating
+  const sellerRating = await Review.getSellerRating(sellerId);
+  const seller = await User.findById(sellerId);
+  if (seller) {
+    await seller.updateSellerRating(sellerRating.averageRating);
+  }
+
+  successResponse(res, null, 'Review deleted successfully', 200);
+});
+
 export default {
   getMyReviews,
   getProductReviews,
   createReview,
   addSellerResponse,
   markReviewHelpful,
+  updateReview,
+  deleteReview,
 };
