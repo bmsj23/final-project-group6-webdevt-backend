@@ -80,8 +80,12 @@ export const getAllProductsAdmin = asyncHandler(async (req, res) => {
     category: req.query.category,
     status: req.query.status,
     page: parseInt(req.query.page) || 1,
-    limit: parseInt(req.query.limit) || 20,
+    limit: parseInt(req.query.limit) || 100,
   };
+
+  if (!req.query.status) {
+    delete filters.status;
+  }
 
   const result = await productService.getAllProducts(filters);
 
