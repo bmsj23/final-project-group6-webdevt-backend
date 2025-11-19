@@ -8,6 +8,11 @@ const router = express.Router();
 // all routes are protected
 router.use(authenticate);
 
+// route   POST /api/upload/profile
+// desc    upload profile picture
+// access  private
+router.post('/profile', upload.single('image'), uploadController.uploadProfilePicture);
+
 // route   POST /api/upload/single
 // desc    upload single image
 // access  private
