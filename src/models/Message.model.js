@@ -30,13 +30,31 @@ const messageSchema = new mongoose.Schema(
 
     messageText: {
       type: String,
-      required: [true, 'Message text is required'],
+      required: false,
       maxlength: [1000, 'Message cannot exceed 1000 characters'],
       trim: true,
+      validate: {
+        validator: function() {
+          return this.messageText || this.image || (this.images && this.images.length > 0);
+        },
+        message: 'Either message text or at least one image must be provided'
+      }
     },
 
     image: {
-      type: String, // string bc this will be the cloudinary url
+      type: String,
+      required: false,
+    },
+
+    images: {
+      type: [String],
+      default: [],
+      validate: {
+        validator: function(images) {
+          return images.length <= 5;
+        },
+        message: 'Cannot send more than 5 images per message'
+      }
     },
 
     isRead: {
