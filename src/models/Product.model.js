@@ -138,6 +138,12 @@ const productSchema = new mongoose.Schema(
       default: false,
     },
 
+    shippingFee: {
+      type: Number,
+      default: 0,
+      min: [0, 'Shipping fee cannot be negative'],
+    },
+
     status: {
       type: String,
       enum: {

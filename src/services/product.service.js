@@ -120,6 +120,7 @@ export const updateProduct = async (productId, sellerId, updateData) => {
     'category',
     'condition',
     'shippingAvailable',
+    'shippingFee',
     'status',
   ];
 
