@@ -28,8 +28,9 @@ export const getAllProducts = asyncHandler(async (req, res) => {
 export const getProduct = asyncHandler(async (req, res) => {
   const { productId } = req.params;
   const incrementView = req.query.incrementView === 'true';
+  const userId = req.user?.id || null;
 
-  const product = await productService.getProductById(productId, incrementView);
+  const product = await productService.getProductById(productId, incrementView, userId);
 
   successResponse(res, product, 'Product retrieved successfully', 200);
 });
@@ -159,8 +160,9 @@ export const getTrendingProducts = asyncHandler(async (req, res) => {
 
 export const incrementProductView = asyncHandler(async (req, res) => {
   const { productId } = req.params;
+  const userId = req.user.id;
 
-  const product = await productService.incrementProductView(productId);
+  const product = await productService.incrementProductView(productId, userId);
 
   successResponse(res, { views: product.views }, 'Product view incremented successfully', 200);
 });
