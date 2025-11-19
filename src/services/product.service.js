@@ -50,17 +50,18 @@ export const createProduct = async (sellerId, productData) => {
 // param {boolean} incrementView - whether to increment view count
 // returns {Object} product data
 
-export const getProductById = async (productId, incrementView = false) => {
+export const getProductById = async (productId, incrementView = false, userId = null) => {
   const product = await Product.findById(productId)
-    .populate('seller', 'name username profilePicture sellerInfo contactNumber');
+    .populate('seller', 'name username profilePicture sellerInfo contactNumber')
+    .select('+viewedBy');
 
   if (!product) {
     throw new AppError('Product not found', 404);
   }
 
-  // increment views if requested
-  if (incrementView && product.status === 'active') {
-    await product.incrementViews();
+  // increment views if requested and user is logged in
+  if (incrementView && product.status === 'active' && userId) {
+    await product.incrementViews(userId);
   }
 
   // get seller's listings count
@@ -483,16 +484,19 @@ export const getTrendingProducts = async ({ limit = 20, daysBack = 7 }) => {
   return trending;
 };
 
-export const incrementProductView = async (productId) => {
-  const product = await Product.findByIdAndUpdate(
-    productId,
-    { $inc: { views: 1 } },
-    { new: true }
-  );
+export const incrementProductView = async (productId, userId) => {
+  if (!userId) {
+    throw new AppError('User must be logged in to view products', 401);
+  }
+
+  const product = await Product.findById(productId).select('+viewedBy');
 
   if (!product) {
     throw new AppError('Product not found', 404);
   }
+
+  // only increment if user hasn't viewed before
+  await product.incrementViews(userId);
 
   return product;
 };
